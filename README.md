@@ -12,7 +12,8 @@ npm test         # 계산 규칙 테스트 (실제 사례 1~5)
 npm run build    # dist/ 에 배포용 파일 생성
 ```
 
-## 배포 (Cloudflare Pages)
+## 배포 (GitHub Pages)
 
-- Build command: `npm run build`
-- Build output directory: `dist`
+`main`에 올라가면 GitHub Actions가 테스트·빌드 후 자동으로 배포합니다.
+처음 한 번: Settings → Pages → Source를 **GitHub Actions**로 선택.
+주소: https://healcye-sys.github.io/cash-count-app/
