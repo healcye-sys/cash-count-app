@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { adjust, Counts, DEFAULT_SETTINGS as S, DENOMS, planBags, planEven, suggestK1Bags, sumCounts } from './calc';
+// 사례 2·3은 "1천원 담당은 1천원만" 설정을 켠 경우의 결과 (기본값은 2026-11-18부터 끔)
+const ONLY = { ...S, oneKOnly: true };
 
 const c = (m50: number, m10: number, k5: number, k1: number): Counts => ({ m50, m10, k5, k1 });
 const totals = (p: ReturnType<typeof planBags>) => p.bags.map((b) => b.total).sort((a, b) => b - a);
@@ -25,9 +27,9 @@ describe('실제 사례 (요구사항/실제-사례.md)', () => {
 
   it('사례 2: 5만 140, 1천 78, 8명, 인턴 1 → 1천원 3명이 26씩만', () => {
     const counts = c(140, 0, 0, 78);
-    const k = suggestK1Bags(counts, 8, 1, S);
+    const k = suggestK1Bags(counts, 8, 1, ONLY);
     expect(k).toBe(3);
-    const p = planBags(counts, 8, 1, k, S);
+    const p = planBags(counts, 8, 1, k, ONLY);
     expect(p.bags.filter((b) => b.kind === 'k1').map((b) => b.items)).toEqual([c(0, 0, 0, 26), c(0, 0, 0, 26), c(0, 0, 0, 26)]);
     expect(p.base).toBe(28);
     expect(totals(p).reduce((a, b) => a + b, 0)).toBe(218);
@@ -49,9 +51,9 @@ describe('실제 사례 (요구사항/실제-사례.md)', () => {
 
   it('사례 3: 7명, 인턴 1, 1천원 33개는 한 명이 1천원만 → 47·47·47·44·37·37·33', () => {
     const counts = c(125, 120, 14, 33);
-    const k = suggestK1Bags(counts, 7, 1, S);
+    const k = suggestK1Bags(counts, 7, 1, ONLY);
     expect(k).toBe(1);
-    const p = planBags(counts, 7, 1, k, S);
+    const p = planBags(counts, 7, 1, k, ONLY);
     expect(p.base).toBe(47);
     expect(totals(p)).toEqual([47, 47, 47, 44, 37, 37, 33]);
     expect(p.bags.find((b) => b.kind === 'k1')!.items).toEqual(c(0, 0, 0, 33));

@@ -13,7 +13,7 @@ export interface Settings {
   fiveKLessSmall: number; // 5천원이 기준 이하일 때 담당자 감소량 (기본 5)
   fiveKLessLarge: number; // 5천원이 기준 초과일 때 담당자 감소량 (기본 10)
   oneKLess: number; // 1천원 담당자 감소량 (기본 5)
-  oneKOnly: boolean; // true: 1천원 담당은 1천원만 한다 (기본). false: 기준−5까지 다른 권종으로 채운다
+  oneKOnly: boolean; // true: 1천원 담당은 1천원만 한다. false(기본, 2026-11-18): 기준−5까지 다른 권종으로 채운다
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -22,7 +22,7 @@ export const DEFAULT_SETTINGS: Settings = {
   fiveKLessSmall: 5,
   fiveKLessLarge: 10,
   oneKLess: 5,
-  oneKOnly: true,
+  oneKOnly: false,
 };
 
 export type BagKind = 'big' | 'intern' | 'k5' | 'k1';
