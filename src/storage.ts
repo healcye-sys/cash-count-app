@@ -43,8 +43,18 @@ function write(key: string, value: unknown) {
 
 export const loadRoster = () => read<Person[]>(KEY.roster, []);
 export const saveRoster = (v: Person[]) => write(KEY.roster, v);
-export const loadSettings = () => ({ ...DEFAULT_SETTINGS, ...read<Partial<Settings>>(KEY.settings, {}) });
-export const saveSettings = (v: Settings) => write(KEY.settings, v);
+// 설정 판 번호. 기본값을 바꿀 때 올리고, 예전 폰에 저장된 값을 새 기본값으로 바꿔 준다.
+const SETTINGS_VERSION = 2;
+type StoredSettings = Partial<Settings> & { v?: number };
+
+export const loadSettings = (): Settings => {
+  const stored = read<StoredSettings>(KEY.settings, {});
+  // 판 2 (2026-11-18): "1천원 담당은 1천원만" 기본값을 끔으로
+  if ((stored.v ?? 1) < 2) delete stored.oneKOnly;
+  const { v: _v, ...rest } = stored;
+  return { ...DEFAULT_SETTINGS, ...rest };
+};
+export const saveSettings = (v: Settings) => write(KEY.settings, { ...v, v: SETTINGS_VERSION });
 export const loadHistory = () => read<HistoryEntry[]>(KEY.history, []);
 export const saveHistory = (v: HistoryEntry[]) => write(KEY.history, v);
 export const loadLastPicked = () => read<string[]>(KEY.last, []);
