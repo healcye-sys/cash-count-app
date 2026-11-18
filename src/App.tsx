@@ -114,9 +114,10 @@ function BagIcon({ size = 24, fill = '#C98A3B', stroke = '#8A5A1E' }: { size?: n
 }
 
 function DownloadIcon() {
+  // 사진(그림) 모양: "그림으로 저장"이 한눈에 보이게
   return (
-    <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 4v11" /><path d="M7 10.5l5 5 5-5" /><path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2" />
+    <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="8.5" cy="9.5" r="1.8" /><path d="M21 16l-5-5-9 9" />
     </svg>
   );
 }
@@ -419,7 +420,7 @@ function ResultScreen({ counts, rows, setRows, onBack, onSave }: {
       <div className="grow" />
       <div className="actions">
         <button className="btn secondary" onClick={onBack}>이전</button>
-        <button className="btn primary" disabled={!ok} onClick={onSave}>저장하기</button>
+        <button className="btn primary" disabled={!ok} onClick={onSave}>닫기</button>
         <button className="btn square" aria-label="결과를 그림으로 내려받기" title="그림으로 내려받기" onClick={() => saveResultImage(rows, counts)}>
           <DownloadIcon />
         </button>
@@ -535,6 +536,9 @@ function HistoryDetail({ entry, onBack, onDelete }: { entry: HistoryEntry; onBac
       <div className="actions">
         <button className="btn secondary" onClick={() => { if (confirm('이 기록을 지울까요?')) onDelete(); }}>지우기</button>
         <button className="btn primary" onClick={onBack}>목록으로</button>
+        <button className="btn square" aria-label="이 기록을 그림으로 내려받기" title="그림으로 내려받기" onClick={() => saveResultImage(entry.rows, entry.counts, new Date(entry.date))}>
+          <DownloadIcon />
+        </button>
       </div>
     </div>
   );
