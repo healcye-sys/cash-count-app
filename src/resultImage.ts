@@ -72,7 +72,21 @@ export function drawResult(rows: ResultRow[], counts: Counts, date: Date): HTMLC
   return c;
 }
 
-/** 그림을 휴대폰에 저장한다. 공유 창을 지원하면 공유 창(사진에 저장)을, 아니면 파일 다운로드를 쓴다. */
+/** 화면 아래에 잠깐 안내 문구를 띄운다. */
+function toast(msg: string) {
+  const el = document.createElement('div');
+  el.textContent = msg;
+  el.setAttribute('role', 'status');
+  el.style.cssText = 'position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:#1b1f2a;color:#fff;padding:14px 20px;border-radius:14px;font-size:17px;font-weight:700;z-index:99;width:max-content;max-width:calc(100% - 32px);text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.2)';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2800);
+}
+
+/**
+ * 그림을 휴대폰에 저장한다.
+ * 안드로이드(갤럭시)·컴퓨터: 바로 내려받기 → 갤러리의 Download 앨범에 들어간다.
+ * 아이폰: 바로 저장하면 사진첩이 아니라 '파일' 앱으로 가서, 공유 창(이미지 저장)을 연다.
+ */
 export async function saveResultImage(rows: ResultRow[], counts: Counts, date = new Date()): Promise<void> {
   const canvas = drawResult(rows, counts, date);
   const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/png'));
@@ -81,8 +95,8 @@ export async function saveResultImage(rows: ResultRow[], counts: Counts, date = 
   const name = `cash-result-${date.getFullYear()}${pad2(date.getMonth() + 1)}${pad2(date.getDate())}-${pad2(date.getHours())}${pad2(date.getMinutes())}.png`;
   const file = new File([blob], name, { type: 'image/png' });
   const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
-  const mobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  if (mobile && nav.canShare?.({ files: [file] })) {
+  const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (ios && nav.canShare?.({ files: [file] })) {
     try { await nav.share({ files: [file] }); return; } catch (e) { if ((e as Error).name === 'AbortError') return; }
   }
   const url = URL.createObjectURL(blob);
@@ -90,4 +104,5 @@ export async function saveResultImage(rows: ResultRow[], counts: Counts, date = 
   a.href = url; a.download = name;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast('갤러리에 저장했어요');
 }
