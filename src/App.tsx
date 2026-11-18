@@ -7,6 +7,7 @@ import {
   HistoryEntry, loadHistory, loadLastPicked, loadRoster, loadSettings, newId, Person, ResultRow, saveHistory,
   saveLastPicked, saveRoster, saveSettings,
 } from './storage';
+import { saveResultImage } from './resultImage';
 
 type Screen = 'input' | 'people' | 'assign' | 'result' | 'roster' | 'settings' | 'history' | 'historyDetail';
 type Mode = 'bags' | 'even';
@@ -108,6 +109,14 @@ function BagIcon({ size = 24, fill = '#C98A3B', stroke = '#8A5A1E' }: { size?: n
   return (
     <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={stroke} strokeWidth="1.5" strokeLinejoin="round">
       <path d="M9 3h6l-1 3h-4z" /><path d="M8 6h8c3 3 5 6 5 10a7 7 0 0 1-7 7h-4a7 7 0 0 1-7-7c0-4 2-7 5-10z" />
+    </svg>
+  );
+}
+
+function DownloadIcon() {
+  return (
+    <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 4v11" /><path d="M7 10.5l5 5 5-5" /><path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2" />
     </svg>
   );
 }
@@ -221,13 +230,6 @@ function PeopleScreen({ roster, headcount, setHeadcount, picked, setPicked, onBa
 
 /* ---------- 3. 주머니 연결 ---------- */
 
-function bagTitle(b: Bag): string {
-  if (b.kind === 'k5') return `5천원이라 ${b.less}개 적게`;
-  if (b.kind === 'k1') return b.less ? `1천원이라 ${b.less}개 적게` : '1천원만';
-  if (b.kind === 'intern') return `인턴이라 ${b.less}개 적게`;
-  return '';
-}
-
 function AssignScreen({ counts, team, interns, settings, mode, setMode, k1Bags, setK1Bags, owners, setOwners, onBack, onBags, onEven }: {
   counts: Counts; team: Person[]; interns: number; settings: Settings; mode: Mode; setMode: (m: Mode) => void;
   k1Bags: number; setK1Bags: (k: number) => void; owners: Record<string, string>; setOwners: (o: Record<string, string>) => void;
@@ -278,7 +280,7 @@ function AssignScreen({ counts, team, interns, settings, mode, setMode, k1Bags, 
         <>
           <p className="lead">모든 권종을 {team.length}명이 고르게 나눠요.{interns > 0 && ` 인턴은 ${settings.internLess}개 적게 받아요.`} 1천원이 많은 날 주머니로 나누면 몇 사람만 잔돈을 떠안을 때 쓰세요.</p>
           <div className="grow" />
-          <div className="actions"><button className="btn primary" onClick={onEven}>결과 보기</button></div>
+          <div className="actions"><button className="btn primary" onClick={onEven}>다음</button></div>
         </>
       ) : (
         <>
@@ -301,7 +303,7 @@ function AssignScreen({ counts, team, interns, settings, mode, setMode, k1Bags, 
                 return (
                   <button key={p.id} className={`slot ${bag ? 'has' : ''} ${isSel ? 'sel' : ''}`} aria-pressed={isSel} onClick={() => setSelected(isSel ? null : p.id)}>
                     <span className="name">{p.name}{p.intern && <span className="tag intern">인턴</span>}</span>
-                    {bag ? <span className="got"><BagIcon size={18} />{bag.total}개</span> : <span className="sub">{isSel ? '주머니를 눌러 주세요' : '비어 있음'}</span>}
+                    {bag ? <span className="got"><BagIcon size={18} fill="#D9DDE3" stroke="#9AA1AD" />{bag.total}개</span> : <span className="sub">{isSel ? '주머니를 눌러 주세요' : '비어 있음'}</span>}
                   </button>
                 );
               })}
@@ -314,11 +316,15 @@ function AssignScreen({ counts, team, interns, settings, mode, setMode, k1Bags, 
                     aria-label={`${b.total}개 주머니, ${itemsText(b.items)}${owner ? `, ${owner.name} 연결됨` : ''}`}>
                     <span className="head">
                       <BagIcon size={26} fill={owner ? '#D9DDE3' : b.kind === 'k5' || b.kind === 'k1' ? '#E9B36A' : '#C98A3B'} stroke={owner ? '#9AA1AD' : '#8A5A1E'} />
-                      {b.kind === 'intern' && <span className="tag intern">인턴</span>}
-                      {owner && <span className="tag owner">{owner.name}</span>}
+                      <span className="num">{b.total}<small>개</small></span>
+                      <span className="tags">
+                        {b.kind === 'intern' && <span className="tag intern">인턴</span>}
+                        {owner && <span className="tag owner">{owner.name}</span>}
+                      </span>
                     </span>
-                    <span className="num">{b.total}<small>개</small></span>
-                    <span className="detail">{itemsText(b.items)}{bagTitle(b) && <><br />{bagTitle(b)}</>}</span>
+                    <span className="detail">
+                      {DENOMS.filter((d) => b.items[d] > 0).map((d) => <span key={d}>{DENOM_LABEL[d]} {b.items[d]}</span>)}
+                    </span>
                   </button>
                 );
               })}
@@ -331,7 +337,7 @@ function AssignScreen({ counts, team, interns, settings, mode, setMode, k1Bags, 
           </p>
           <div className="actions">
             {!done && <button className="btn secondary" onClick={autoFill}>나머지 자동 연결</button>}
-            <button className="btn primary" disabled={!done} onClick={() => onBags(plan.bags)}>결과 보기</button>
+            <button className="btn primary" disabled={!done} onClick={() => onBags(plan.bags)}>다음</button>
           </div>
         </>
       )}
@@ -389,8 +395,11 @@ function ResultScreen({ counts, rows, setRows, onBack, onSave }: {
       <div className={`status ${ok ? 'ok' : 'bad'}`}>{ok ? '권종별 합계가 입력한 개수와 모두 맞아요.' : '권종별 합계가 입력한 개수와 달라요. 숫자를 확인해 주세요.'}</div>
       <div className="grow" />
       <div className="actions">
-        <button className="btn secondary" onClick={onBack}>다시 연결</button>
+        <button className="btn secondary" onClick={onBack}>이전</button>
         <button className="btn primary" disabled={!ok} onClick={onSave}>저장하기</button>
+        <button className="btn square" aria-label="결과를 그림으로 내려받기" title="그림으로 내려받기" onClick={() => saveResultImage(rows, counts)}>
+          <DownloadIcon />
+        </button>
       </div>
     </div>
   );
