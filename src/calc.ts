@@ -226,8 +226,17 @@ export function planEven(counts: Counts, internFlags: boolean[], s: Settings): C
  * +1: 그 권종을 가진 사람 중 총 개수가 가장 많은 사람에게서 뺀다.
  * −1: 그 권종을 가진 사람 중 총 개수가 가장 적은 사람에게 더한다 (아무도 없으면 전체에서 가장 적은 사람).
  */
-export function adjust(rows: Counts[], person: number, d: Denom, delta: 1 | -1): Counts[] | null {
+export function adjust(rows: Counts[], person: number, d: Denom, delta: 1 | -1, other?: number): Counts[] | null {
   const next = rows.map((r) => ({ ...r }));
+  if (other !== undefined) {
+    // 엄마가 상대를 직접 고른 경우: 그 사람과 1개를 주고받는다
+    if (other === person || !next[other]) return null;
+    const from = delta === 1 ? other : person;
+    const to = delta === 1 ? person : other;
+    if (next[from][d] <= 0) return null;
+    next[from][d]--; next[to][d]++;
+    return next;
+  }
   const others = next.map((_, i) => i).filter((i) => i !== person);
   if (delta === 1) {
     const donors = others.filter((i) => next[i][d] > 0);
