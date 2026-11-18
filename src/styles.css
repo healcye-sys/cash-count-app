@@ -162,11 +162,23 @@ button { cursor: pointer; }
 .tr.sum .r, .tr.sum .t { color: #fff; }
 
 .editbar {
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  display: flex; flex-direction: column; gap: 8px;
   padding: 10px 12px; margin-top: 10px; border-radius: 16px; background: var(--blue-soft); border: 2px solid var(--blue-line);
 }
 .editbar .what { font-size: 17px; font-weight: 700; }
 .editbar .stepper button { background: #fff; }
+.editbar .stepper button.on { background: var(--blue); color: #fff; }
+.editbar .stepper button:disabled { opacity: .4; }
+.editrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.editbar .ask { margin: 2px 2px 0; font-size: 16px; font-weight: 700; color: var(--blue); }
+.partners { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.partners button {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-height: 60px; padding: 8px 12px;
+  border-radius: 12px; border: 2px solid var(--blue-line); background: #fff; text-align: left;
+}
+.partners button:active { background: var(--blue-soft); }
+.partners .pn { font-size: 18px; font-weight: 700; }
+.partners .pc { font-size: 14px; color: var(--sub); }
 
 .list { display: flex; flex-direction: column; gap: 8px; }
 .item {

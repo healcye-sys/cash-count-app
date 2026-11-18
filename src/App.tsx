@@ -371,25 +371,48 @@ function ResultScreen({ counts, rows, setRows, onBack, onSave }: {
   counts: Counts; rows: ResultRow[]; setRows: (r: ResultRow[]) => void; onBack: () => void; onSave: () => void;
 }) {
   const [sel, setSel] = useState<{ r: number; d: Denom } | null>(null);
+  const [dir, setDir] = useState<1 | -1 | null>(null);
   const ok = DENOMS.every((d) => rows.reduce((a, r) => a + r.items[d], 0) === counts[d]);
-  const change = (delta: 1 | -1) => {
-    if (!sel) return;
-    const next = adjust(rows.map((r) => r.items), sel.r, sel.d, delta);
+  const move = (other: number) => {
+    if (!sel || !dir) return;
+    const next = adjust(rows.map((r) => r.items), sel.r, sel.d, dir, other);
     if (next) setRows(rows.map((r, i) => ({ ...r, items: next[i] })));
   };
+  const pickCell = (r: number, d: Denom) => {
+    setSel(sel && sel.r === r && sel.d === d ? null : { r, d });
+    setDir(null);
+  };
+  // +면 그 권종을 가진 사람에게서 빼 오고, −면 아무에게나 줄 수 있다
+  const partners = sel && dir ? rows.map((row, i) => ({ row, i })).filter(({ row, i }) => i !== sel.r && (dir === -1 || row.items[sel.d] > 0)) : [];
   const now = new Date();
   return (
     <div className="screen">
       <Top title="오늘 배분 결과" onBack={onBack} />
-      <p className="lead">{now.getMonth() + 1}월 {now.getDate()}일 · {rows.length}명 · 전체 {sumCounts(counts)}개. 숫자를 누르면 고칠 수 있어요. 고치면 같은 권종의 다른 사람이 자동으로 맞춰져요.</p>
-      <ResultTable rows={rows} sel={sel} onCell={(r, d) => setSel(sel && sel.r === r && sel.d === d ? null : { r, d })} />
+      <p className="lead">{now.getMonth() + 1}월 {now.getDate()}일 · {rows.length}명 · 전체 {sumCounts(counts)}개. 숫자를 누르면 고칠 수 있어요.</p>
+      <ResultTable rows={rows} sel={sel} onCell={pickCell} />
       {sel && (
         <div className="editbar">
-          <span className="what">{rows[sel.r].name} · {DENOM_LABEL[sel.d]} {rows[sel.r].items[sel.d]}개</span>
-          <div className="stepper">
-            <button aria-label="하나 줄이기" onClick={() => change(-1)}>−</button>
-            <button aria-label="하나 늘리기" onClick={() => change(1)}>+</button>
+          <div className="editrow">
+            <span className="what">{rows[sel.r].name} · {DENOM_LABEL[sel.d]} <strong>{rows[sel.r].items[sel.d]}</strong>개</span>
+            <div className="stepper">
+              <button aria-label="하나 줄이기" aria-pressed={dir === -1} className={dir === -1 ? 'on' : ''} disabled={rows[sel.r].items[sel.d] <= 0} onClick={() => setDir(dir === -1 ? null : -1)}>−</button>
+              <button aria-label="하나 늘리기" aria-pressed={dir === 1} className={dir === 1 ? 'on' : ''} onClick={() => setDir(dir === 1 ? null : 1)}>+</button>
+            </div>
           </div>
+          {dir && (
+            <>
+              <p className="ask">{dir === 1 ? `누구의 ${DENOM_LABEL[sel.d]}에서 1개 가져올까요?` : `누구에게 ${DENOM_LABEL[sel.d]} 1개를 줄까요?`}</p>
+              {partners.length === 0 ? <p className="ask">{DENOM_LABEL[sel.d]}을 가진 다른 사람이 없어요.</p> : (
+                <div className="partners">
+                  {partners.map(({ row, i }) => (
+                    <button key={i} onClick={() => move(i)}>
+                      <span className="pn">{row.name}</span><span className="pc">{DENOM_LABEL[sel.d]} {row.items[sel.d]} · 합계 {sumCounts(row.items)}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
       <div className={`status ${ok ? 'ok' : 'bad'}`}>{ok ? '권종별 합계가 입력한 개수와 모두 맞아요.' : '권종별 합계가 입력한 개수와 달라요. 숫자를 확인해 주세요.'}</div>

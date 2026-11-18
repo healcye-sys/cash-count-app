@@ -108,3 +108,17 @@ describe('규칙 세부', () => {
     expect(denomSum(down)).toEqual(denomSum(rows));
   });
 });
+
+describe('손 수정: 상대를 직접 고르기', () => {
+  it('올리면 고른 사람에게서 1개 가져오고, 내리면 고른 사람에게 1개 준다', () => {
+    const rows = [c(57, 0, 0, 0), c(63, 0, 0, 0), c(0, 25, 27, 0), c(9, 16, 27, 0), c(0, 37, 0, 20)];
+    const up = adjust(rows, 0, 'm50', 1, 3)!;
+    expect(up[0].m50).toBe(58);
+    expect(up[3].m50).toBe(8);
+    expect(up[1].m50).toBe(63);
+    const down = adjust(rows, 0, 'm50', -1, 2)!;
+    expect(down[0].m50).toBe(56);
+    expect(down[2].m50).toBe(1);
+    expect(adjust(rows, 0, 'm50', 1, 2)).toBeNull(); // 5만이 없는 사람에게서는 못 가져옴
+  });
+});
